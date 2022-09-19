@@ -26,7 +26,21 @@ namespace ThinksterASPCoreApi.Controllers
         [HttpGet]
         public async Task<IActionResult> Get(bool returnFact = false)
         {
-                return null;
+            try
+            {
+                List<Star> result = await _spaceRepository.GetAllStarsAsync(returnFact);
+
+                if (result == null)
+                {
+                    return NotFound();
+                }
+                return Ok(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500);
+            }
+            
         }
 
         // Exercise 2: The GET method below is currently returning null.
@@ -39,7 +53,12 @@ namespace ThinksterASPCoreApi.Controllers
         {
             try
             {
-                Star result = null;
+                Star result = await _spaceRepository.GetStarAsync(id, returnFact);
+
+                if (result == null)
+                {
+                    return NotFound();
+                }
 
                 return Ok(result);
             }
