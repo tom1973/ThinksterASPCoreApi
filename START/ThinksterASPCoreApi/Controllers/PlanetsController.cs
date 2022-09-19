@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -50,6 +51,67 @@ namespace ThinksterASPCoreApi.Controllers
             {
                 return StatusCode(500);
             }            
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Post([FromBody]Planet planet)
+        {
+            try
+            {
+                if(!ModelState.IsValid)
+                {
+                    return BadRequest("Model is missing required data!");
+                }
+
+                _spaceRepository.AddPlanet(planet);
+                bool result = await _spaceRepository.SaveChangesAsync();
+                if (result)
+                {
+                    return Created($"api/planets/{planet.Id}", planet);
+                }
+
+                return BadRequest();
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Could not reach the database");
+            }
+            
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Put(int id, [FromBody]Planet newPlanetData)
+        {
+            try
+            {
+                if (id != newPlanetData.Id)
+                {
+                    return BadRequest("ID's do not match!");
+                }
+
+                var existingPlanet = await _spaceRepository.GetPlanetAsync(id, true);
+                if (existingPlanet == null)
+                {
+                    return BadRequest("Could not find planet with id {id}");
+                }
+
+                existingPlanet.Mass = newPlanetData.Mass;
+                existingPlanet.Name = newPlanetData.Name;
+                for (int i = 0; i < existingPlanet.Moons.Count; i++)
+                {
+                    existingPlanet.Moons[i].Name = newPlanetData.Moons[i].Name;
+                }
+
+                await _spaceRepository.SaveChangesAsync();
+
+                return NoContent();
+
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Could not reach the database");
+            }
+            
         }
     }
 }
