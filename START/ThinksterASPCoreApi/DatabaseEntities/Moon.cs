@@ -9,6 +9,7 @@ namespace ThinksterASPCoreApi.DatabaseEntities
         public int Id { get; set; }
 
         public int PlanetId { get; set; }
+        [Required]
         public string Name { get; set; }
     }
 }

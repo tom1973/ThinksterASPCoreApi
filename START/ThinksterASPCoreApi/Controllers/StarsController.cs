@@ -83,15 +83,35 @@ namespace ThinksterASPCoreApi.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(int id, [FromBody]Star newStarData)
         {
-            var existingStar = await _spaceRepository.GetStarAsync(id, true);
+            try
+            {
+                if (id != newStarData.Id)
+                {
+                    return NotFound("Id's don't match");
+                }
 
-            existingStar.AgeInMillions = newStarData.AgeInMillions;
-            existingStar.Name = newStarData.Name;
-            existingStar.Fact = newStarData.Fact;
+                var existingStar = await _spaceRepository.GetStarAsync(id, true);
 
-            await _spaceRepository.SaveChangesAsync();
+                if (existingStar == null)
+                {
+                    return NotFound("We couldn't find a star with given id {id}");
+                }
 
-            return NoContent();
+                existingStar.AgeInMillions = newStarData.AgeInMillions;
+                existingStar.Name = newStarData.Name;
+                existingStar.Fact = newStarData.Fact;
+
+                await _spaceRepository.SaveChangesAsync();
+
+                return NoContent();
+
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                                    "Could not reach the database");
+            }
+            
         }
 
         // Exercise 4: The DELETE method below is currently working. However, 
