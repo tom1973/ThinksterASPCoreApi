@@ -75,9 +75,25 @@ namespace ThinksterASPCoreApi.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody]Star star)
         {
-            _spaceRepository.AddStar(star);
-            bool result = await _spaceRepository.SaveChangesAsync();
-            return Created($"api/stars/{star.Id}", star);
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest("Required data is missing");
+                }
+
+                _spaceRepository.AddStar(star);
+                bool result = await _spaceRepository.SaveChangesAsync();
+                if (result)
+                {
+                    return Created($"api/stars/{star.Id}", star);
+                }
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Could not reach the database");
+            }
+            return BadRequest("Request couldn't be completed");
         }
 
         [HttpPut("{id}")]
@@ -94,7 +110,7 @@ namespace ThinksterASPCoreApi.Controllers
 
                 if (existingStar == null)
                 {
-                    return NotFound("We couldn't find a star with given id {id}");
+                    return NotFound($"We couldn't find a star with given id {id}");
                 }
 
                 existingStar.AgeInMillions = newStarData.AgeInMillions;
@@ -126,7 +142,7 @@ namespace ThinksterASPCoreApi.Controllers
                 var starToDelete = await _spaceRepository.GetStarAsync(id);
                 if (starToDelete == null)
                 {
-                    return NotFound();
+                    return NotFound($"No star exists with given id {id}");
                 }
 
                 _spaceRepository.DeleteStar(starToDelete);
@@ -134,14 +150,14 @@ namespace ThinksterASPCoreApi.Controllers
                 bool result = await _spaceRepository.SaveChangesAsync();
                 if (result)
                 {
-                    return Ok();
+                    return Ok("Star successfully deleted!");
                 }
             }
             catch (Exception)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError);
+                return StatusCode(StatusCodes.Status500InternalServerError, "Could not reach the database");
             }
-            return BadRequest();
+            return BadRequest("Request couldn't be processed");
         }
     }
 }
